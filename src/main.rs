@@ -66,21 +66,25 @@ fn blake3_measure_hash_speed(data: &[u8], label: &str) {
 
 fn main() {
     let data_8 = [0u8; 8];
+    let data_16 = [0u8; 16];
     let data_32 = [0u8; 32];
     let data_64 = [0u8; 64];
     let data_128 = [0u8; 128];
     println!("SHA256:");
     sha256_measure_hash_speed(&data_8, "8");
+    sha256_measure_hash_speed(&data_16, "16");
     sha256_measure_hash_speed(&data_32, "32");
     sha256_measure_hash_speed(&data_64, "64");
     sha256_measure_hash_speed(&data_128, "128");
     println!("SHA512:");
     sha512_measure_hash_speed(&data_8, "8");
+    sha512_measure_hash_speed(&data_16, "16");
     sha512_measure_hash_speed(&data_32, "32");
     sha512_measure_hash_speed(&data_64, "64");
     sha512_measure_hash_speed(&data_128, "128");
     println!("BLAKE3:");
     blake3_measure_hash_speed(&data_8, "8");
+    blake3_measure_hash_speed(&data_16, "16");
     blake3_measure_hash_speed(&data_32, "32");
     blake3_measure_hash_speed(&data_64, "64");
     blake3_measure_hash_speed(&data_128, "128");
