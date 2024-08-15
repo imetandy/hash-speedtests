@@ -1,5 +1,5 @@
-use sha2::{Sha256, Sha512, Digest};
 use blake3::Hasher;
+use sha2::{Digest, Sha256, Sha512};
 use std::time::Instant;
 
 fn sha256_hash_data(data: &[u8]) -> Vec<u8> {
@@ -20,72 +20,42 @@ fn blake3_hash_data(data: &[u8]) -> Vec<u8> {
     hasher.finalize().as_bytes().to_vec()
 }
 
-fn sha256_measure_hash_speed(data: &[u8], label: &str) {
+/** Generic function to measure hash speed. It accepts a closure that hashes the data */
+fn measure_hash_speed<F>(data: &[u8], label: &str, hash_fn: F, algorithm: &str)
+where
+    F: Fn(&[u8]) -> Vec<u8>,
+{
     let iterations = 1_000_000;
     let start = Instant::now();
 
     for _ in 0..iterations {
-        sha256_hash_data(data);
+        hash_fn(data);
     }
 
     let duration = start.elapsed();
     let duration_per_hash = duration.as_secs_f64() / iterations as f64;
+    let hashes_per_second = 1.0 / duration_per_hash;
 
-    println!("{} bytes: {:.9} seconds per hash", label, duration_per_hash);
+    println!(
+        "{} - {} bytes: {:.2} hash/sec, {:.9} seconds per hash",
+        algorithm, label, hashes_per_second, duration_per_hash
+    );
 }
-
-
-fn sha512_measure_hash_speed(data: &[u8], label: &str) {
-    let iterations = 1_000_000;
-    let start = Instant::now();
-
-    for _ in 0..iterations {
-        sha512_hash_data(data);
-    }
-
-    let duration = start.elapsed();
-    let duration_per_hash = duration.as_secs_f64() / iterations as f64;
-
-    println!("{} bytes: {:.9} seconds per hash", label, duration_per_hash);
-}
-
-fn blake3_measure_hash_speed(data: &[u8], label: &str) {
-    let iterations = 1_000_000;
-    let start = Instant::now();
-
-    for _ in 0..iterations {
-        blake3_hash_data(data);
-    }
-
-    let duration = start.elapsed();
-    let duration_per_hash = duration.as_secs_f64() / iterations as f64;
-
-    println!("{} bytes: {:.9} seconds per hash", label, duration_per_hash);
-}
-
 
 fn main() {
-    let data_8 = [0u8; 8];
-    let data_16 = [0u8; 16];
-    let data_32 = [0u8; 32];
-    let data_64 = [0u8; 64];
-    let data_128 = [0u8; 128];
-    println!("SHA256:");
-    sha256_measure_hash_speed(&data_8, "8");
-    sha256_measure_hash_speed(&data_16, "16");
-    sha256_measure_hash_speed(&data_32, "32");
-    sha256_measure_hash_speed(&data_64, "64");
-    sha256_measure_hash_speed(&data_128, "128");
-    println!("SHA512:");
-    sha512_measure_hash_speed(&data_8, "8");
-    sha512_measure_hash_speed(&data_16, "16");
-    sha512_measure_hash_speed(&data_32, "32");
-    sha512_measure_hash_speed(&data_64, "64");
-    sha512_measure_hash_speed(&data_128, "128");
-    println!("BLAKE3:");
-    blake3_measure_hash_speed(&data_8, "8");
-    blake3_measure_hash_speed(&data_16, "16");
-    blake3_measure_hash_speed(&data_32, "32");
-    blake3_measure_hash_speed(&data_64, "64");
-    blake3_measure_hash_speed(&data_128, "128");
+    let data_sizes = [8, 16, 32, 64, 128];
+
+    let hash_functions: [(&str, &dyn Fn(&[u8]) -> Vec<u8>); 3] = [
+        ("SHA256", &sha256_hash_data),
+        ("SHA512", &sha512_hash_data),
+        ("BLAKE3", &blake3_hash_data),
+    ];
+
+    for (algorithm, hash_function) in &hash_functions {
+        println!("\n{}:", algorithm);
+        for &size in &data_sizes {
+            let data = vec![0u8; size];
+            measure_hash_speed(&data, &size.to_string(), *hash_function, algorithm);
+        }
+    }
 }
